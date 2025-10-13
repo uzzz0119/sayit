@@ -1,0 +1,7 @@
+Flask
+yt-dlp
+openai-whisper
+openai
+reportlab
+requests
+python-dotenv

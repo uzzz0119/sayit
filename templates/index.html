@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SayIt - Say it. Learn it. Own it.</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Young+Serif:wght@400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #F5F2EE;
+      color: #2D2D2D;
+      overflow-x: hidden;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0;
+    }
+
+    .page-wrapper {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* ✅ 主容器改为横向长方形比例（16:9） */
+    .main-container {
+      position: relative;
+      width: 1440px;       /* 原 1280 改为更宽 */
+      height: 810px;       /* 原 720 改为稍高 */
+      background-color: #F5F2EE;
+      transform-origin: center center;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    /* 装饰图位置略微上移，适配宽屏 */
+    .decoration-group {
+      position: absolute;
+      left: 50%;
+      top: 340px;
+      transform: translateX(-50%);
+      width: 1100px;
+      height: auto;
+      pointer-events: none;
+    }
+
+    .decoration-group img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    /* 标题更大、更居中 */
+    .headline {
+      position: absolute;
+      left: 50%;
+      top: 65px;
+      transform: translateX(-50%);
+      width: auto;
+      font-family: 'Young Serif', serif;
+      font-weight: 400;
+      font-size: 180px;
+      line-height: 1.1;
+      text-align: center;
+      letter-spacing: -0.04em;
+      color: #2D2D2D;
+    }
+
+    .headline .letter {
+      display: inline-block;
+      animation: float-letter 2s ease-in-out infinite;
+    }
+
+    .headline .letter:nth-child(1) { animation-delay: 0s; }
+    .headline .letter:nth-child(2) { animation-delay: 0.15s; }
+    .headline .letter:nth-child(3) { animation-delay: 0.3s; }
+    .headline .letter:nth-child(4) { animation-delay: 0.45s; }
+    .headline .letter:nth-child(5) { animation-delay: 0.6s; }
+
+    @keyframes float-letter {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    /* 副标题稍微靠下，保持水平居中 */
+    .tagline {
+      position: absolute;
+      left: 50%;
+      top: 265px;
+      transform: translateX(-50%);
+      width: auto;
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: 35px;
+      line-height: 1.3;
+      text-align: center;
+      letter-spacing: 0.05em;
+      color: #2D2D2D;
+    }
+
+    /* 对话气泡放在右上角 */
+    .speech-bubble-container {
+      position: absolute;
+      right: 340px;
+      top: 140px;
+      width: 130px;
+      height: 80px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      z-index: 10;
+      animation: float-bubble 3s ease-in-out infinite;
+    }
+
+    @keyframes float-bubble {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    .speech-bubble-container:hover {
+      animation-play-state: paused;
+      transform: translateY(-10px) scale(1.05);
+    }
+
+    .speech-bubble-container:active {
+      animation-play-state: paused;
+      transform: translateY(-10px) scale(0.98);
+    }
+
+    .speech-bubble {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .speech-bubble img {
+      width: 100%;
+      height: 100%;
+    }
+
+    .speech-bubble-text {
+        position: absolute;
+        left: 0;
+        top: 15px;                /* 改为0，使用 flex 自动垂直居中 */
+        width: 100%;
+        height: 100%;          /* 填满父容器 */
+        display: flex;
+        justify-content: center; /* 水平居中 */
+        font-size: 24px;
+        font-weight: 700;
+        color: #FFFFFF;
+        text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+
+    /* 底部文字向下贴齐 */
+    .address {
+      position: absolute;
+      left: 40px;
+      bottom: 40px;
+      width: 500px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.4;
+      color: #2D2D2D;
+      white-space: pre-line;
+    }
+
+    .credits {
+      position: absolute;
+      right: 40px;
+      bottom: 40px;
+      width: 480px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.4;
+      text-align: right;
+      color: #2D2D2D;
+      white-space: pre-line;
+    }
+
+    /* ✅ 自适应缩放：按视口缩放比例 */
+    html, body {
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <script>
+    // ✅ 动态缩放函数
+    function adjustScale() {
+      const container = document.querySelector('.main-container');
+      if (!container) return;
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      const baseW = 1440;
+      const baseH = 810;
+
+      const scale = Math.min(vw / baseW, vh / baseH);
+      container.style.transform = `scale(${scale})`;
+    }
+
+    window.addEventListener('DOMContentLoaded', adjustScale);
+    window.addEventListener('resize', adjustScale);
+  </script>
+
+  <div class="page-wrapper">
+    <div class="main-container">
+      <!-- 装饰元素 -->
+      <div class="decoration-group">
+        <img src="/static/images/illustration.svg" alt="Decoration">
+      </div>
+
+      <!-- 主标题 -->
+      <h1 class="headline"><span class="letter">S</span><span class="letter">a</span><span class="letter">y</span><span class="letter">I</span><span class="letter">t</span></h1>
+
+      <!-- 副标题 -->
+      <p class="tagline">Say it. Learn it. Own it.</p>
+
+      <!-- 对话按钮 -->
+      <div class="speech-bubble-container" onclick="window.location.href='/app'">
+        <div class="speech-bubble">
+          <img src="/static/images/speech-bubble.svg" alt="Speech Bubble">
+        </div>
+        <div class="speech-bubble-text">Now→</div>
+      </div>
+
+      <!-- 底部文字 -->
+      <div class="address">4582 GREENWOOD LANE
+NASHVILLE, TN 37206</div>
+
+      <div class="credits">Made by
+Uzzz</div>
+    </div>
+  </div>
+</body>
+</html>
