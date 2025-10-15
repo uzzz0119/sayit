@@ -1,0 +1,10 @@
+Flask
+Flask-Login
+Flask-Bcrypt
+yt-dlp
+openai-whisper
+openai
+reportlab
+requests
+python-dotenv
+faster-whisper
