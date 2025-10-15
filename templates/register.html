@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - SayIt</title>
+    <style>
+        /* Import Google Fonts - Young Serif for vintage header */
+        @import url('https://fonts.googleapis.com/css2?family=Young+Serif&display=swap');
+
+        /* CSS Variables - 与app.html保持一致 */
+        :root {
+            --background: #F5F2EE;
+            --foreground: #0a0a0a;
+            --card: #ffffff;
+            --card-foreground: #0a0a0a;
+            --primary: #030213;
+            --primary-foreground: #ffffff;
+            --secondary: #f3f3f5;
+            --secondary-foreground: #030213;
+            --muted: #ececf0;
+            --muted-foreground: #717182;
+            --accent: #e9ebef;
+            --accent-foreground: #030213;
+            --destructive: #d4183d;
+            --destructive-foreground: #ffffff;
+            --border: rgba(0, 0, 0, 0.1);
+            --input: #f3f3f5;
+            --ring: #717182;
+            --radius: 0.625rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--foreground);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        /* Floating Doodle Animation */
+        @keyframes float-doodle {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-10px) rotate(5deg);
+            }
+        }
+
+        .float-doodle {
+            animation: float-doodle 3s ease-in-out infinite;
+        }
+
+        .register-container {
+            max-width: 28rem;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Decorative doodles */
+        .doodle {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .doodle-1 {
+            top: -2rem;
+            left: -2rem;
+            animation: float-doodle 3s ease-in-out infinite;
+        }
+
+        .doodle-2 {
+            top: -2rem;
+            right: -2rem;
+            animation: float-doodle 3s ease-in-out infinite;
+            animation-delay: 1s;
+        }
+
+        .doodle-3 {
+            bottom: -2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: float-doodle 3s ease-in-out infinite;
+            animation-delay: 0.5s;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-family: 'Young Serif', serif;
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+            color: #2D2D2D;
+        }
+
+        .header p {
+            color: var(--muted-foreground);
+            font-size: 0.875rem;
+        }
+
+        /* Card */
+        .card {
+            background-color: var(--card);
+            border: 2px solid var(--foreground);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .card-description {
+            color: var(--muted-foreground);
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .input {
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: calc(var(--radius) - 0.25rem);
+            background-color: var(--input);
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--ring);
+            box-shadow: 0 0 0 2px rgba(113, 113, 130, 0.1);
+        }
+
+        .helper-text {
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+            margin-top: 0.25rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: calc(var(--radius) - 0.25rem);
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.625rem 1rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 0.75rem;
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Links */
+        .link-text {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: var(--muted-foreground);
+        }
+
+        .link-text a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .link-text a:hover {
+            text-decoration: underline;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .doodle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <!-- Decorative doodles -->
+        <div class="doodle doodle-1">✦</div>
+        <div class="doodle doodle-2">✧</div>
+        <div class="doodle doodle-3">❋</div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1>SayIt</h1>
+            <p>Say it. Learn it. Own it.</p>
+        </div>
+
+        <!-- Register Card -->
+        <div class="card">
+            <h2>创建账户</h2>
+            <p class="card-description">开始您的英语学习之旅</p>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('auth.register') }}" id="register-form">
+                <div class="form-group">
+                    <label class="label" for="username">用户名</label>
+                    <input 
+                        class="input" 
+                        id="username" 
+                        name="username" 
+                        type="text" 
+                        placeholder="请输入用户名"
+                        required
+                        autocomplete="username"
+                        minlength="3"
+                    />
+                    <p class="helper-text">至少3个字符</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="label" for="password">密码</label>
+                    <input 
+                        class="input" 
+                        id="password" 
+                        name="password" 
+                        type="password" 
+                        placeholder="请输入密码"
+                        required
+                        autocomplete="new-password"
+                        minlength="6"
+                    />
+                    <p class="helper-text">至少6个字符</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="label" for="confirm_password">确认密码</label>
+                    <input 
+                        class="input" 
+                        id="confirm_password" 
+                        name="confirm_password" 
+                        type="password" 
+                        placeholder="请再次输入密码"
+                        required
+                        autocomplete="new-password"
+                        minlength="6"
+                    />
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submit-btn">
+                    注册
+                </button>
+            </form>
+
+            <div class="link-text">
+                已有账户？<a href="{{ url_for('auth.login') }}">立即登录</a>
+            </div>
+        </div>
+
+        <div class="link-text" style="margin-top: 1.5rem;">
+            <a href="{{ url_for('main.index') }}">← 返回首页</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('register-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirm_password');
+
+        form.addEventListener('submit', function(e) {
+            // 验证密码匹配
+            if (password.value !== confirmPassword.value) {
+                e.preventDefault();
+                alert('两次输入的密码不一致，请重新输入');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span>注册中...';
+        });
+
+        // 实时验证密码匹配
+        confirmPassword.addEventListener('input', function() {
+            if (this.value && password.value !== this.value) {
+                this.setCustomValidity('两次输入的密码不一致');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    </script>
+</body>
+</html>
+
