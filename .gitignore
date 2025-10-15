@@ -37,3 +37,8 @@ Thumbs.db
 # Project specific
 *.log
 
+# 忽略所有 PowerShell 脚本
+*.ps1
+*.bat
+
+requirements.txt
