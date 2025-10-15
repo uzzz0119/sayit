@@ -5,3 +5,4 @@ openai
 reportlab
 requests
 python-dotenv
+faster-whisper

@@ -327,3 +327,121 @@ def text_to_speech(text):
         print(f"生成语音时出错: {error_msg}")
         raise Exception(error_msg)
 
+
+def get_sentence_break_indices_by_llm(words):
+    """
+    使用大语言模型基于词序列决定句子边界（严格按句号断句的语义要求）。
+
+    输入：words 为按时间顺序排列的词（字符串）列表；不要包含时间，仅文本令牌。
+    输出：整数索引列表（0-based，表示每个句子的结束词索引，包含该索引）。
+
+    约束：
+    - 模型仅返回 JSON 数组，如 [12, 35, 78]，不包含多余文本。
+    - 边界尽量落在自然句子末尾；若需要补标点，请仍仅返回边界索引，我们将在下游统一补 '.'。
+    """
+    try:
+        api_key = os.getenv("OPENAI_API_KEY")
+        base_url = os.getenv("OPENAI_BASE_URL")
+
+        if not api_key:
+            print("错误: 未设置 OPENAI_API_KEY 环境变量。")
+            return None
+
+        client = OpenAI(api_key=api_key, base_url=base_url)
+
+        # 为避免超长，限制最大词数（保守 8000 tokens 以内）。
+        # 实际视频通常较短，直接发送全部 words 即可。
+        words_payload = words
+
+        system_msg = (
+            "You are an expert at sentence boundary detection for English transcripts. "
+            "Given an ordered list of tokens (strings) forming a spoken monologue, "
+            "decide sentence end positions as word indices (0-based, inclusive). "
+            "Return ONLY a JSON array of integers, no explanation. "
+            "Prefer natural sentence ends. Do not remove or modify tokens."
+        )
+
+        user_msg = (
+            "Tokens (JSON array of strings). Decide sentence end indices. "
+            "Output must be a pure JSON array of integers:\n\n" + str(words_payload)
+        )
+
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": user_msg},
+            ],
+            temperature=0.0,
+            max_tokens=1024,
+        )
+
+        content = resp.choices[0].message.content.strip()
+        # 解析为 JSON 数组
+        import json as _json
+        indices = _json.loads(content)
+        if not isinstance(indices, list) or not all(isinstance(i, int) for i in indices):
+            print("LLM 返回格式不符合预期，需为整数数组")
+            return None
+        return indices
+    except Exception as e:
+        print(f"调用 LLM 获取句子边界失败: {e}")
+        return None
+
+
+def restore_sentence_final_punct_by_llm(words):
+    """
+    使用大模型在不改动词序与词数的前提下，只在需要的词尾添加句末标点（. ! ?）。
+    输入：words（字符串列表）
+    输出：等长字符串列表（仅在句末位置为该词追加句点/问号/感叹号）。
+    要求：
+    - 模型仅返回 JSON 数组（与输入等长），每个元素为字符串。
+    - 不允许删除/新增词，不允许在中间词添加标点；仅允许在自然句末为该词追加 . ! ?。
+    """
+    try:
+        api_key = os.getenv("OPENAI_API_KEY")
+        base_url = os.getenv("OPENAI_BASE_URL")
+        if not api_key:
+            print("错误: 未设置 OPENAI_API_KEY 环境变量。")
+            return None
+
+        client = OpenAI(api_key=api_key, base_url=base_url)
+        system_msg = (
+            "You restore sentence-final punctuation for spoken English transcripts. "
+            "Rules: (1) Only append final punctuation (. ! ?) to the end of tokens; "
+            "(2) Do NOT insert, remove, or reorder tokens; list length must stay the same; "
+            "(3) Prefer '.'; use '?' only for clear questions; use '!' only for strong exclamations; "
+            "(4) Consider clause/sentence transitions: when a new sentence naturally starts at discourse markers like "
+            "'because', 'so', 'but', 'however', 'therefore', 'thus', 'meanwhile', 'afterwards', 'finally', "
+            "'anyway', 'besides', 'instead', 'rather', 'although', 'though', 'whereas', 'while' (contrast), "
+            "you may end the previous sentence by appending punctuation to the token immediately BEFORE that marker, "
+            "but only when the preceding tokens form a complete thought. "
+            "(5) Do not add mid-sentence commas; only final punctuation at true sentence ends. "
+            "Return ONLY a JSON array of strings with the same length as input."
+        )
+        user_msg = (
+            "Tokens (JSON array of strings). Append final punctuation to sentence-ending tokens ONLY.\n"
+            "Tokens:\n" + str(words)
+        )
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": user_msg},
+            ],
+            temperature=0.0,
+            max_tokens=2048,
+        )
+        content = resp.choices[0].message.content.strip()
+        import json as _json
+        out = _json.loads(content)
+        if not isinstance(out, list) or len(out) != len(words):
+            print("LLM 标点恢复返回格式不符合预期（需等长字符串数组）")
+            return None
+        if not all(isinstance(s, str) for s in out):
+            print("LLM 标点恢复数组元素需为字符串")
+            return None
+        return out
+    except Exception as e:
+        print(f"调用 LLM 恢复句末标点失败: {e}")
+        return None
