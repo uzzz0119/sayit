@@ -407,20 +407,33 @@ def restore_sentence_final_punct_by_llm(words):
 
         client = OpenAI(api_key=api_key, base_url=base_url)
         system_msg = (
-            "You restore sentence-final punctuation for spoken English transcripts. "
-            "Rules: (1) Only append final punctuation (. ! ?) to the end of tokens; "
-            "(2) Do NOT insert, remove, or reorder tokens; list length must stay the same; "
-            "(3) Prefer '.'; use '?' only for clear questions; use '!' only for strong exclamations; "
-            "(4) Consider clause/sentence transitions: when a new sentence naturally starts at discourse markers like "
-            "'because', 'so', 'but', 'however', 'therefore', 'thus', 'meanwhile', 'afterwards', 'finally', "
-            "'anyway', 'besides', 'instead', 'rather', 'although', 'though', 'whereas', 'while' (contrast), "
-            "you may end the previous sentence by appending punctuation to the token immediately BEFORE that marker, "
-            "but only when the preceding tokens form a complete thought. "
-            "(5) Do not add mid-sentence commas; only final punctuation at true sentence ends. "
-            "Return ONLY a JSON array of strings with the same length as input."
+            "You are a punctuation restoration expert for English spoken transcripts. "
+            "Task: Add ONLY sentence-final punctuation (. ! ?) where truly needed.\n\n"
+            "STRICT RULES:\n"
+            "1. Output MUST be a JSON array of strings with EXACTLY the same length as input\n"
+            "2. NEVER insert, remove, or reorder tokens\n"
+            "3. ONLY append punctuation to tokens that end a complete sentence\n"
+            "4. Most tokens should remain UNCHANGED - only 10-20% of tokens should get punctuation\n"
+            "5. Prefer '.' for statements; use '?' ONLY for clear questions; use '!' ONLY for strong exclamations\n\n"
+            "WHERE TO ADD PUNCTUATION:\n"
+            "- Natural sentence endings (complete thoughts)\n"
+            "- BEFORE discourse markers that start new sentences: 'So', 'But', 'Because', 'However', "
+            "'Therefore', 'Thus', 'Meanwhile', 'Afterwards', 'Finally', 'Anyway', 'Besides', 'Instead', "
+            "'Although', 'Though', 'Whereas', 'While' (when they start contrasting clauses)\n"
+            "- Only when the preceding tokens form a COMPLETE independent thought\n\n"
+            "WHERE NOT TO ADD:\n"
+            "- Mid-sentence words\n"
+            "- Conjunctions in the middle of compound sentences\n"
+            "- Articles, prepositions, or auxiliary words\n\n"
+            "EXAMPLE:\n"
+            "Input: [' I', ' just', ' made', ' some', ' coffee', ' so', ' I', ' was', ' able', ' to', ' relax']\n"
+            "Output: [' I', ' just', ' made', ' some', ' coffee.', ' so', ' I', ' was', ' able', ' to', ' relax']\n"
+            "(Only 'coffee' gets '.', NOT every word)\n\n"
+            "Return ONLY the JSON array, no explanation."
         )
         user_msg = (
-            "Tokens (JSON array of strings). Append final punctuation to sentence-ending tokens ONLY.\n"
+            "Restore sentence-final punctuation for these tokens. "
+            "Remember: only 10-20% of tokens should get punctuation!\n\n"
             "Tokens:\n" + str(words)
         )
         resp = client.chat.completions.create(

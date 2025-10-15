@@ -309,21 +309,33 @@ def generate_caption(audio_path):
                     'end': w['end'],
                 })
 
-        # 先用 LLM 恢复句末标点；若失败再退化为 LLM 边界索引；再失败退化为原生句点断句
+        # 使用 LLM 智能恢复句末标点（带验证逻辑）
         tokens_only = [w['word'] for w in all_words]
         break_indices = []
+        
+        # 尝试调用 LLM 恢复标点
         punct_tokens = restore_sentence_final_punct_by_llm(tokens_only)
+        
+        # 验证 LLM 输出：拒绝过度断句（超过30%的词有标点视为异常）
         if punct_tokens is not None and len(punct_tokens) == len(tokens_only):
-            # 更新词文本为带句末标点的版本，并直接以标点作为断句依据
-            for i, t in enumerate(punct_tokens):
-                all_words[i]['word'] = t
-                if t.rstrip().endswith('.') or t.rstrip().endswith('!') or t.rstrip().endswith('?'):
-                    break_indices.append(i)
-        else:
-            # 无法恢复标点时，改用 LLM 给出边界索引
-            bi = get_sentence_break_indices_by_llm(tokens_only)
-            if isinstance(bi, list):
-                break_indices = bi
+            punct_count = sum(1 for t in punct_tokens if t.rstrip().endswith(('.', '!', '?')))
+            punct_ratio = punct_count / len(punct_tokens) if len(punct_tokens) > 0 else 0
+            
+            if punct_ratio > 0.3:
+                print(f"⚠️ LLM 标点恢复异常：{punct_ratio:.1%} 的词被加标点（超过30%），拒绝使用")
+                print("   回退到 Whisper 原始标点")
+                punct_tokens = None
+            else:
+                print(f"✓ LLM 标点恢复成功：{punct_count}/{len(tokens_only)} 个词有句末标点 ({punct_ratio:.1%})")
+                # 更新词文本为带标点的版本
+                for i, t in enumerate(punct_tokens):
+                    all_words[i]['word'] = t
+        
+        # 收集断句索引
+        for i, w in enumerate(all_words):
+            token = (w['word'] or '').rstrip()
+            if token.endswith('.') or token.endswith('!') or token.endswith('?'):
+                break_indices.append(i)
 
         sentence_segments = []
         if break_indices:

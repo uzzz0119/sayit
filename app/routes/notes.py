@@ -52,4 +52,3 @@ def delete_note(filename):
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
