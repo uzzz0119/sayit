@@ -389,9 +389,21 @@
 
         /* Empty State */
         .empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
             text-align: center;
             padding: 3rem 1rem;
             color: var(--muted-foreground);
+            min-height: 220px;
+        }
+
+        /* 让空状态在网格容器中水平垂直居中，且横跨所有列 */
+        .notes-grid .empty-state {
+            grid-column: 1 / -1;
+            justify-self: center;
+            align-self: center;
         }
 
         .empty-state svg {
@@ -681,7 +693,7 @@
 
         <!-- Tabs -->
         <div class="tabs">
-            <div class="tabs-list">
+            <div class="tabs-list" style="grid-template-columns: repeat(4, 1fr);">
                 <button class="tabs-trigger active" data-tab="generator">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                     笔记生成
@@ -689,6 +701,10 @@
                 <button class="tabs-trigger" data-tab="storage">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
                     笔记存储
+                </button>
+                <button class="tabs-trigger" data-tab="shadowing">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                    影子跟读
                 </button>
                 <button class="tabs-trigger" data-tab="learning">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
@@ -717,6 +733,28 @@
 
                     <div id="link-indicator" class="alert alert-muted hidden">
                         <span id="link-text">等待输入...</span>
+                    </div>
+
+                    <!-- 提示信息 -->
+                    <div class="alert alert-info" id="video-download-hint" style="display: none;">
+                        <strong>智能处理：</strong>
+                        <p style="margin-top: 0.5rem; font-size: 0.875rem;">
+                            系统将自动下载音频和视频，并保存到本地。<br>
+                            生成的媒体文件可在"影子跟读"区使用，删除笔记时会自动清理。
+                        </p>
+                    </div>
+
+                    <!-- 下载进度提示 -->
+                    <div class="alert alert-success" id="download-progress-hint" style="display: none;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            <div>
+                                <strong>媒体文件已保存！</strong>
+                                <p style="font-size: 0.875rem; margin: 0.25rem 0 0 0;">
+                                    音频和视频已保存到本地，现在可以在"影子跟读"区使用
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="btn-group">
@@ -757,6 +795,57 @@
                 </div>
             </div>
 
+            <!-- Shadowing Tab -->
+            <div class="tabs-content" id="shadowing-tab">
+                <div class="card">
+                    <h2>影子跟读</h2>
+
+                    <!-- 视频选择区域 -->
+                    <div class="form-group">
+                        <select id="video-select" class="input">
+                            <option value="">加载中...</option>
+                        </select>
+                    </div>
+
+                    <!-- 视频播放器和字幕区域 -->
+                    <div id="shadowing-player-area" class="hidden" style="margin-top: 1rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1.8fr; gap: 1rem;">
+                            <!-- 左侧：视频播放器 -->
+                            <div>
+                                <div style="position: relative; background: #000; border-radius: var(--radius); overflow: hidden;">
+                                    <video id="shadowing-video" style="width: 100%; display: block;" controls controlsList="nodownload">
+                                        您的浏览器不支持视频播放。
+                                    </video>
+                                </div>
+                                
+                                <!-- 播放控制 -->
+                                <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <button class="btn btn-secondary" id="prev-sentence-btn" style="flex: 1;">上一句</button>
+                                    <button class="btn btn-primary" id="replay-sentence-btn" style="flex: 1;">重放</button>
+                                    <button class="btn btn-primary" id="next-sentence-btn" style="flex: 1;">下一句</button>
+                                </div>
+                                
+                                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; margin-top: 0.75rem; cursor: pointer;">
+                                    <input type="checkbox" id="loop-playback-checkbox" style="cursor: pointer;">
+                                    循环播放
+                                </label>
+                            </div>
+
+                            <!-- 右侧：句子列表 -->
+                            <div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                                    <span id="current-sentence-index">0/0</span>
+                                    <span id="progress-text">0%</span>
+                                </div>
+                                <div id="sentences-list" class="scroll-area" style="max-height: 500px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem;">
+                                    <!-- 句子列表将动态生成 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Learning Tab -->
             <div class="tabs-content" id="learning-tab">
                 <!-- Decorative doodle -->
@@ -776,13 +865,13 @@
                             </button>
                         </div>
                         <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.5rem;">
-                            💡 将使用此笔记作为模板，将细节内容替换成您的表达
+                            将使用此笔记作为模板，将细节内容替换成您的表达
                         </p>
                     </div>
 
                     <div id="no-note-hint" style="margin-bottom: 1rem;">
                         <div class="alert alert-muted">
-                            💡 提示：在笔记存储区点击笔记可选择为模板。未选择笔记时，将直接转换为地道美式英语。
+                            提示：在笔记存储区点击笔记可选择为模板。未选择笔记时，将直接转换为地道美式英语。
                         </div>
                     </div>
 
@@ -800,7 +889,7 @@
                             <div id="mention-dropdown" class="mention-dropdown"></div>
                         </div>
                         <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--muted-foreground);">
-                            💡 提示：输入 <span style="background: var(--muted); padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-family: monospace;">@</span> 可以引用笔记作为模板
+                            提示：输入 <span style="background: var(--muted); padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-family: monospace;">@</span> 可以引用笔记作为模板
                         </div>
                         <button class="btn btn-primary" id="transform-btn" style="margin-top: 0.5rem; width: 100%;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
@@ -906,6 +995,7 @@
             const url = this.value.trim();
             if (!url) {
                 linkIndicator.classList.add('hidden');
+                document.getElementById('video-download-hint').style.display = 'none';
                 return;
             }
             
@@ -918,17 +1008,21 @@
             if (type === 'music') {
                 linkIndicator.classList.add('alert-success');
                 linkText.textContent = '🎵 检测到：QQ音乐链接';
+                document.getElementById('video-download-hint').style.display = 'none';
             } else if (type === 'video') {
                 linkIndicator.classList.add('alert-info');
                 // 特殊提示小红书链接
                 if (/xiaohongshu\.com/i.test(url) || /xhslink\.com/i.test(url)) {
-                    linkText.textContent = '📹 检测到：小红书链接（yt-dlp支持）';
+                    linkText.textContent = '检测到：小红书链接（yt-dlp支持）';
                 } else {
-                    linkText.textContent = '📹 检测到：视频链接';
+                    linkText.textContent = '检测到：视频链接';
                 }
+                // 显示智能下载提示
+                document.getElementById('video-download-hint').style.display = 'block';
             } else {
                 linkIndicator.classList.add('alert-muted');
                 linkText.textContent = '❓ 未识别的链接类型';
+                document.getElementById('video-download-hint').style.display = 'none';
             }
         });
 
@@ -978,13 +1072,15 @@
             setLoading(true, 'video');
 
             try {
+                // 总是使用智能下载策略：先下载音频，后台下载视频
                 const response = await fetch('/api/caption', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         video_url: videoUrl,
                         output_format: format,
-                        save_to_storage: true
+                        save_to_storage: true,
+                        download_type: 'audio'  // 总是先下载音频，后台会自动下载视频
                     })
                 });
 
@@ -1003,7 +1099,14 @@
                     triggerDownload(blob, filename);
                 }
                 
-                showStatus('success', '✅ 视频字幕处理完成！已开始下载。');
+                // 显示下载进度提示（30秒后自动隐藏）
+                const progressHint = document.getElementById('download-progress-hint');
+                progressHint.style.display = 'block';
+                setTimeout(() => {
+                    progressHint.style.display = 'none';
+                }, 30000); // 30秒后自动隐藏
+                
+                showStatus('success', '✅ 笔记生成完成！音频和视频已保存，可在影子跟读区使用。');
             } catch (error) {
                 showStatus('error', `❌ 处理失败：${error.message}`);
             } finally {
@@ -1118,7 +1221,7 @@
             switch(note.type) {
                 case 'video':
                     badgeClass = 'badge-video';
-                    badgeText = '📹 视频';
+                    badgeText = '视频';
                     break;
                 case 'music':
                     badgeClass = 'badge-music';
@@ -1656,6 +1759,264 @@
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         }
+
+        // ========== Shadowing Area Functions ==========
+        let currentVideo = null;
+        let currentSegments = [];
+        let currentSegmentIndex = 0;
+        let masteredSegments = new Set();
+        let shadowingVideo = null;
+        let isPlayingSentence = false;
+
+        // 加载视频列表
+        async function loadVideos() {
+            const videoSelect = document.getElementById('video-select');
+            
+            try {
+                const response = await fetch('/api/shadowing/videos');
+                if (!response.ok) throw new Error('加载视频列表失败');
+                
+                const videos = await response.json();
+                
+                // 只显示有字幕的视频
+                const availableVideos = videos.filter(v => v.has_segments);
+                
+                if (availableVideos.length === 0) {
+                    videoSelect.innerHTML = '<option value="">暂无可用视频</option>';
+                    return;
+                }
+                
+                videoSelect.innerHTML = '<option value="">选择视频</option>' +
+                    availableVideos.map(video => {
+                        const typeLabel = video.media_type === 'audio' ? '[音频]' : '[视频]';
+                        return `<option value="${video.filename}">${typeLabel} ${video.title}</option>`;
+                    }).join('');
+            } catch (error) {
+                console.error('加载视频列表失败:', error);
+                videoSelect.innerHTML = '<option value="">加载失败</option>';
+            }
+        }
+
+        // 视频选择事件
+        document.getElementById('video-select').addEventListener('change', async function(e) {
+            const filename = e.target.value;
+            if (!filename) {
+                document.getElementById('shadowing-player-area').classList.add('hidden');
+                return;
+            }
+            
+            await loadVideoAndSegments(filename);
+        });
+
+        // 加载视频和字幕
+        async function loadVideoAndSegments(filename) {
+            try {
+                // 加载字幕segments
+                const response = await fetch(`/api/shadowing/videos/${filename}/segments`);
+                if (!response.ok) {
+                    console.error('Failed to load segments');
+                    return;
+                }
+                
+                const data = await response.json();
+                currentSegments = data.segments;
+                currentVideo = filename;
+                currentSegmentIndex = 0;
+                masteredSegments.clear();
+                
+                // 设置视频源
+                shadowingVideo = document.getElementById('shadowing-video');
+                shadowingVideo.src = `/api/shadowing/videos/${filename}/stream`;
+                
+                // 显示播放器区域
+                document.getElementById('shadowing-player-area').classList.remove('hidden');
+                
+                // 初始化UI
+                updateShadowingUI();
+                renderSentencesList();
+                
+                // 播放第一句
+                playCurrentSegment();
+            } catch (error) {
+                console.error('加载视频失败:', error);
+            }
+        }
+
+        // 播放当前句子
+        function playCurrentSegment() {
+            if (!shadowingVideo || currentSegments.length === 0) return;
+            
+            const segment = currentSegments[currentSegmentIndex];
+            if (!segment) return;
+            
+            isPlayingSentence = true;
+            
+            // 设置播放位置
+            shadowingVideo.currentTime = segment.start;
+            shadowingVideo.play();
+            
+            // 监听时间更新，在句子结束时暂停或循环
+            const checkTime = () => {
+                if (shadowingVideo.currentTime >= segment.end) {
+                    const isLoopEnabled = document.getElementById('loop-playback-checkbox').checked;
+                    
+                    if (isLoopEnabled) {
+                        // 循环播放：回到句子开始位置
+                        shadowingVideo.currentTime = segment.start;
+                    } else {
+                        // 不循环：暂停
+                        shadowingVideo.pause();
+                        isPlayingSentence = false;
+                        shadowingVideo.removeEventListener('timeupdate', checkTime);
+                    }
+                }
+            };
+            
+            shadowingVideo.addEventListener('timeupdate', checkTime);
+            
+            updateShadowingUI();
+        }
+
+        // 重放当前句子
+        function replayCurrentSegment() {
+            playCurrentSegment();
+        }
+
+        // 下一句（确认掌握）
+        function nextSegment() {
+            if (currentSegments.length === 0) return;
+            
+            // 标记当前句子为已掌握
+            masteredSegments.add(currentSegmentIndex);
+            
+            // 移动到下一句
+            if (currentSegmentIndex < currentSegments.length - 1) {
+                currentSegmentIndex++;
+                playCurrentSegment();
+                renderSentencesList();
+            } else {
+                showShadowingStatus('success', '🎉 恭喜！你已经完成所有句子的练习！');
+            }
+        }
+
+        // 上一句
+        function prevSegment() {
+            if (currentSegments.length === 0 || currentSegmentIndex === 0) return;
+            
+            currentSegmentIndex--;
+            playCurrentSegment();
+            renderSentencesList();
+        }
+
+        // 更新UI
+        function updateShadowingUI() {
+            if (currentSegments.length === 0) return;
+            
+            // 更新当前句子索引
+            document.getElementById('current-sentence-index').textContent = 
+                `${currentSegmentIndex + 1}/${currentSegments.length}`;
+            
+            // 更新进度百分比
+            const totalCount = currentSegments.length;
+            const masteredCount = masteredSegments.size;
+            const percentage = Math.round((masteredCount / totalCount) * 100);
+            document.getElementById('progress-text').textContent = `${percentage}%`;
+        }
+
+        // 渲染句子列表
+        function renderSentencesList() {
+            const listContainer = document.getElementById('sentences-list');
+            
+            listContainer.innerHTML = currentSegments.map((segment, index) => {
+                const isCurrent = index === currentSegmentIndex;
+                const isMastered = masteredSegments.has(index);
+                
+                // 计算片段时长
+                const duration = (segment.end - segment.start).toFixed(1);
+                
+                let statusIcon = '';
+                let statusClass = '';
+                
+                if (isMastered) {
+                    statusIcon = '✅';
+                    statusClass = 'color: #388e3c;';
+                } else if (isCurrent) {
+                    statusIcon = '▶️';
+                    statusClass = 'color: var(--primary); font-weight: 600;';
+                }
+                
+                return `
+                    <div onclick="jumpToSegment(${index})" 
+                         style="padding: 0.5rem; cursor: pointer; border-radius: 0.25rem; margin-bottom: 0.25rem; ${isCurrent ? 'background: var(--accent);' : ''} ${statusClass}"
+                         onmouseover="this.style.background='var(--accent)'"
+                         onmouseout="this.style.background='${isCurrent ? 'var(--accent)' : 'transparent'}'">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <span style="margin-right: 0.5rem;">${statusIcon}</span>
+                                <span style="font-size: 0.75rem; color: var(--muted-foreground); margin-right: 0.5rem;">${index + 1}.</span>
+                                <span style="font-size: 0.875rem;">${segment.text}</span>
+                            </div>
+                            <span style="font-size: 0.7rem; color: var(--muted-foreground); white-space: nowrap; margin-left: 0.5rem;">${duration}s</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 跳转到指定句子
+        function jumpToSegment(index) {
+            if (index < 0 || index >= currentSegments.length) return;
+            
+            currentSegmentIndex = index;
+            playCurrentSegment();
+            renderSentencesList();
+        }
+
+        // 按钮事件
+        document.getElementById('replay-sentence-btn').addEventListener('click', replayCurrentSegment);
+        document.getElementById('next-sentence-btn').addEventListener('click', nextSegment);
+        document.getElementById('prev-sentence-btn').addEventListener('click', prevSegment);
+
+        // 键盘事件监听
+        document.addEventListener('keydown', function(e) {
+            // 只在影子跟读tab激活时响应
+            const shadowingTab = document.getElementById('shadowing-tab');
+            if (!shadowingTab.classList.contains('active')) return;
+            
+            // 如果焦点在输入框或select上，不处理
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                return;
+            }
+            
+            switch(e.key) {
+                case ' ':  // 空格键 - 重放
+                    e.preventDefault();
+                    replayCurrentSegment();
+                    break;
+                case 'Enter':  // 回车键 - 确认掌握
+                    e.preventDefault();
+                    nextSegment();
+                    break;
+                case 'ArrowLeft':  // 左方向键 - 上一句
+                    e.preventDefault();
+                    prevSegment();
+                    break;
+                case 'ArrowRight':  // 右方向键 - 下一句
+                    e.preventDefault();
+                    currentSegmentIndex = Math.min(currentSegmentIndex + 1, currentSegments.length - 1);
+                    playCurrentSegment();
+                    renderSentencesList();
+                    break;
+            }
+        });
+
+        // 切换到影子跟读tab时加载视频列表
+        document.querySelector('[data-tab="shadowing"]').addEventListener('click', function() {
+            setTimeout(() => {
+                loadVideos();
+            }, 100);
+        });
+
     </script>
 </body>
 </html>
